@@ -121,13 +121,15 @@ def parse_pdf(pdf_path: str) -> Optional[PDFreport]:
 def extract_zip(zip_path: str):
     zip_folder_path = get_parent(zip_path)
     zf = ZipFile(zip_path)
+    ex = None
     for passwd in ['infected', 'malware', 'virus']:
         try:
             zf.extractall(path=zip_folder_path, pwd=bytes(passwd, 'utf-8'))
-            break
+            return
         except RuntimeError as e:
-            print(e)
+            ex = str(e)
             pass
+    print(f'[!] {zip_path=} exception_msg={ex}')
 
 
 def main(tgt_folder: str, outfile_json: str):
@@ -144,6 +146,7 @@ def main(tgt_folder: str, outfile_json: str):
         reports = list(filter(None, tqdm(pool.imap(parse_pdf, pdfs), total=len(pdfs))))
     with open(outfile_json, 'w') as outfile:
         json.dump(reports, outfile, cls=MyEncoder)
+
 
 def test():
     APT_collections = join(dirname(__file__), 'Test_files')
