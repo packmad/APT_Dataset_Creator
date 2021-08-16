@@ -5,7 +5,7 @@ For more information on file structure, [here](https://github.com/packmad/APT_Da
 
 Moreover, during its execution, it also extracts all the archives it finds with well-known passwords.
 
-The hashes can be used to download missing the samples from VirusTotal, while the extracted files can be organized as desired (I use my [PyPEfilter](https://github.com/packmad/pypefilter)).
+The hashes can be used to download missing samples from VirusTotal, while the extracted files can be organized as desired (I use my [PyPEfilter](https://github.com/packmad/pypefilter)).
 
 
 ### Dependencies
