@@ -125,7 +125,7 @@ def parse_pdf(pdf_path: str) -> Optional[PDFreport]:
     return PDFreport(pdf_path, sha256_set, sha1_set, md5_set)
 
 
-def extract_zip(zip_path: str):
+def extract_zip(zip_path: str) -> bool:
     zip_folder_path = get_parent(zip_path)
 
     for passwd in [None, 'infected', 'malware', 'virus']:
@@ -135,11 +135,12 @@ def extract_zip(zip_path: str):
         try:
             output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode(errors='ignore')
             if 'Everything is Ok' in output:
-                return
+                return True
         except subprocess.CalledProcessError as e:
             emsg = e.output.decode(errors='replace') if e.output else e
             if 'Wrong password' not in emsg:
                 print(f'[!] {zip_path=}', )
+    return False
 
 
 def main(tgt_folder: str, outfile_json: str = None):
