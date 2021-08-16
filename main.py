@@ -42,9 +42,9 @@ class PDFreport:
     def __init__(self, pdf_path: str, sha256_set: Set, sha1_set: Set, md5_set: Set):
         par = get_parent(pdf_path)
         self.year = None
-        if par.startswith('20'):
+        if par.startswith(f'{os.path.sep}20'):
             try:
-                self.year = int(par[:4])
+                self.year = int(par[1:5])
             except:
                 pass
         self.pdf_path = pdf_path.replace(str(APT_collections), '')

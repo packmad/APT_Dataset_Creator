@@ -10,3 +10,9 @@ git clone --recurse-submodules <PROTO>packmad/APT_Dataset_Creator
 ```
 
 Get yourself some coffee because it's going to take a long time...
+
+### Update
+```
+git pull
+git submodule foreach git pull origin master
+```
