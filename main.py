@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 import json
 import magic
 import os
 import re
+import subprocess
 import sys
 import traceback
 
@@ -21,10 +24,12 @@ from tqdm import tqdm
 from typing import List, Set, Optional, Tuple
 from zipfile import ZipFile
 
+
 sha256_regex = re.compile(r'[A-Fa-f0-9]{64}')
 sha1_regex = re.compile(r'[A-Fa-f0-9]{40}')
 md5_regex = re.compile(r'[A-Fa-f0-9]{32}')
 
+EXE_7Z_PATH = '/usr/bin/7z'; assert isfile(EXE_7Z_PATH)
 APT_collections = join(dirname(__file__), 'APT_CyberCriminal_Campagin_Collections')
 years = [str(i) for i in range(2006, int(datetime.now().year)+1)]
 
@@ -74,7 +79,8 @@ class PDFreport:
 
     def __str__(self) -> str:
         print(self.sha256_hashes, self.sha1_hashes, self.md5_hashes)
-        return f'len( sha256={len(self.sha256_hashes)}, sha1={len(self.sha1_hashes)}, md5={len(self.md5_hashes)} )'
+        return f'len( sha256={len(self.sha256_hashes)}, ' \
+               f'sha1={len(self.sha1_hashes)}, md5={len(self.md5_hashes)} )'
 
 
 def uppercase_set(uset: Set[str], toadd: List[str]):
@@ -121,15 +127,19 @@ def parse_pdf(pdf_path: str) -> Optional[PDFreport]:
 
 def extract_zip(zip_path: str):
     zip_folder_path = get_parent(zip_path)
-    zf = ZipFile(zip_path)
-    ex = None
-    for passwd in ['infected', 'malware', 'virus']:
+
+    for passwd in [None, 'infected', 'malware', 'virus']:
+        cmd = [EXE_7Z_PATH, 'x', '-aoa', zip_path, f'-o{zip_folder_path}']
+        if passwd is not None:
+            cmd.insert(3, f'-p{passwd}')
         try:
-            zf.extractall(path=zip_folder_path, pwd=bytes(passwd, 'utf-8'))
-            return
-        except RuntimeError as e:
-            ex = str(e)
-    print(f'[!] {zip_path=} exception_msg={ex}')
+            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode(errors='ignore')
+            if 'Everything is Ok' in output:
+                return
+        except subprocess.CalledProcessError as e:
+            emsg = e.output.decode(errors='replace') if e.output else e
+            if 'Wrong password' not in emsg:
+                print(f'[!] {zip_path=}', )
 
 
 def main(tgt_folder: str, outfile_json: str = None):
@@ -152,7 +162,10 @@ def main(tgt_folder: str, outfile_json: str = None):
 
 def test():
     APT_collections = join(dirname(__file__), 'Test_files')
-    print(json.dumps(parse_pdf(join(APT_collections, 'test.pdf')), cls=LamerEncoder))
+    extract_zip(join(APT_collections, 'test.zip'))
+    test_pdf = join(APT_collections, 'test.pdf')
+    print(json.dumps(parse_pdf(test_pdf), cls=LamerEncoder))
+    os.remove(test_pdf)
 
 
 if __name__ == "__main__":
