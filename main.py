@@ -5,6 +5,7 @@ import re
 import sys
 import traceback
 
+from datetime import datetime
 from io import StringIO
 from json import JSONEncoder
 from multiprocessing import Pool
@@ -25,9 +26,10 @@ sha1_regex = re.compile(r'[A-Fa-f0-9]{40}')
 md5_regex = re.compile(r'[A-Fa-f0-9]{32}')
 
 APT_collections = join(dirname(__file__), 'APT_CyberCriminal_Campagin_Collections')
+years = [str(i) for i in range(2006, int(datetime.now().year)+1)]
 
 
-class MyEncoder(JSONEncoder):
+class LamerEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
 
@@ -40,14 +42,13 @@ class PDFreport:
     md5_hashes: List[str]
 
     def __init__(self, pdf_path: str, sha256_set: Set, sha1_set: Set, md5_set: Set):
-        par = get_parent(pdf_path)
-        self.year = None
-        if par.startswith(f'{os.path.sep}20'):
-            try:
-                self.year = int(par[1:5])
-            except:
-                pass
         self.pdf_path = pdf_path.replace(str(APT_collections), '')
+
+        self.year = None
+        for y in years:
+            if y in self.pdf_path:
+                self.year = int(y)
+                break
 
         # there is probably a smarter way to do it with sound regexps, anyway...
         valid_sha1 = set()
@@ -128,11 +129,10 @@ def extract_zip(zip_path: str):
             return
         except RuntimeError as e:
             ex = str(e)
-            pass
     print(f'[!] {zip_path=} exception_msg={ex}')
 
 
-def main(tgt_folder: str, outfile_json: str):
+def main(tgt_folder: str, outfile_json: str = None):
     assert isdir(tgt_folder)
     zips = get_all_files_matching_magic(tgt_folder, 'Zip archive')
     len_zips = len(zips)
@@ -144,15 +144,17 @@ def main(tgt_folder: str, outfile_json: str):
     print('> Parsing PDFs...')
     with Pool() as pool:
         reports = list(filter(None, tqdm(pool.imap(parse_pdf, pdfs), total=len(pdfs))))
+    if outfile_json is None:
+        outfile_json = f"reports_{datetime.today().strftime('%Y-%m-%d')}.json"
     with open(outfile_json, 'w') as outfile:
-        json.dump(reports, outfile, cls=MyEncoder)
+        json.dump(reports, outfile, cls=LamerEncoder)
 
 
 def test():
     APT_collections = join(dirname(__file__), 'Test_files')
-    print(json.dumps(parse_pdf(join(APT_collections, 'test.pdf')), cls=MyEncoder))
+    print(json.dumps(parse_pdf(join(APT_collections, 'test.pdf')), cls=LamerEncoder))
 
 
 if __name__ == "__main__":
     #test(); sys.exit()
-    main(APT_collections, 'out.json')
+    main(APT_collections)
