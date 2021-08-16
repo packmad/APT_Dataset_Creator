@@ -126,8 +126,8 @@ def parse_pdf(pdf_path: str) -> Optional[PDFreport]:
 
 
 def extract_zip(zip_path: str) -> bool:
+    print('>', zip_path)
     zip_folder_path = get_parent(zip_path)
-
     for passwd in [None, 'infected', 'malware', 'virus']:
         cmd = [EXE_7Z_PATH, 'x', '-aoa', zip_path, f'-o{zip_folder_path}']
         if passwd is not None:
@@ -149,7 +149,8 @@ def main(tgt_folder: str, outfile_json: str = None):
     len_zips = len(zips)
     print('> Extracting ZIPs...')
     with Pool() as pool:
-        tqdm(pool.imap(extract_zip, zips), total=len_zips)
+        xres = list(tqdm(pool.imap(extract_zip, zips), total=len_zips))
+        print(f'< Successfully extracted {sum(xres)}/{len_zips}')
 
     pdfs = get_all_files_matching_magic(tgt_folder, 'PDF')
     print('> Parsing PDFs...')
