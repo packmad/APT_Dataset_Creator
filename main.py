@@ -19,10 +19,9 @@ from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
-from os.path import join, basename, dirname, isdir, isfile
+from os.path import join, dirname, isdir, isfile
 from tqdm import tqdm
-from typing import List, Set, Optional, Tuple
-from zipfile import ZipFile
+from typing import List, Set, Optional
 
 
 sha256_regex = re.compile(r'[A-Fa-f0-9]{64}')
@@ -48,7 +47,6 @@ class PDFreport:
 
     def __init__(self, pdf_path: str, sha256_set: Set, sha1_set: Set, md5_set: Set):
         self.pdf_path = pdf_path.replace(str(APT_collections), '')
-
         self.year = None
         for y in years:
             if y in self.pdf_path:
@@ -126,8 +124,6 @@ def parse_pdf(pdf_path: str) -> Optional[PDFreport]:
 
 
 def extract_zip(zip_path: str) -> Optional[bool]:
-    if 'samples' in zip_path:
-        return None
     zip_folder_path = get_parent(zip_path)
     for passwd in [None, 'infected', 'malware', 'virus']:
         cmd = [EXE_7Z_PATH, 'x', '-y', '-aoa', zip_path, f'-o{zip_folder_path}']
@@ -172,5 +168,5 @@ def test():
 
 
 if __name__ == "__main__":
-    #test(); sys.exit()
+    # test(); sys.exit()
     main(APT_collections)
